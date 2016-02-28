@@ -1,3 +1,9 @@
 venv/
 .*
+*.pyc
+*.db
+*~
+dist/
+*.egg-info/
+
 !.gitignore
