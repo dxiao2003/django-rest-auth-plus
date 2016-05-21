@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 
 from rest_auth_plus.permissions import IsOwner
 from rest_auth_plus.serializers import SocialAccountSerializer
-from rest_framework import mixins
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -16,7 +16,7 @@ from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.exceptions import ValidationError as RestValidationError
 
 
-class SocialAccountViewSet(mixins.ListModelMixin, GenericViewSet):
+class SocialAccountViewSet(ListAPIView, GenericViewSet):
     queryset = SocialAccount.objects.all()
     serializer_class = SocialAccountSerializer
     permission_classes = (IsAdminUser,)
