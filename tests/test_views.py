@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from random import randint
 
-from allauth.socialaccount.models import SocialAccount
+from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from django.conf.urls import patterns, url, include
 from django.contrib.auth.models import User
 from rest_auth.serializers import UserDetailsSerializer
@@ -45,8 +45,11 @@ user_social_accounts_parent_fk = \
 
 
 def social_account_test(account, a):
-    return account.id == a["id"] and account.provider == a["provider"] and \
-        account.uid == a["uid"]
+    return account.provider == a["provider"] and \
+        account.uid == a["uid"] and (account.provider != 'google' or
+            (account.socialtoken_set.first().token ==
+                                     a["social_token_set"][0]["token"] and
+             account.socialtoken_set.first().account.uid == a["uid"]))
 
 
 class SocialAccountTestCase(APITestCase):
@@ -65,9 +68,18 @@ class SocialAccountTestCase(APITestCase):
                                          provider='facebook',
                                          uid=str(randint(1, 100000000000)))
 
-        SocialAccount.objects.create(user=self.user_2,
-                                     provider='google',
-                                     uid=str(randint(1, 100000000000)))
+        self.account2 = SocialAccount.objects.create(
+            user=self.user_2,
+            provider='google',
+            uid=str(randint(1, 100000000000))
+        )
+        self.app = SocialApp.objects.create(provider='google',
+                                            name='test app',
+                                            client_id='client_id',
+                                            secret='secret')
+        self.token = SocialToken.objects.create(app=self.app,
+                                                account=self.account2,
+                                                token="skldfjslf")
 
     def list_social_accounts(self):
         return self.client.get(reverse('social-account-list'))
