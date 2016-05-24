@@ -3,5 +3,8 @@
 Extra tools for Djanto REST Framework authentication
 ====================================================
 
-Adds additional features to ``django-rest-auth``, such as endpoints to
-disconnect social accounts.
+Adds additional features to ``django-rest-auth``:
+
+* Endpoint to list all social accounts related to a user
+
+* Endpoint to disconnect a social account from a user
