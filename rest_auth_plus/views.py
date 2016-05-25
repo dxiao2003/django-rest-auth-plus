@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-# view all social accounts for a specific user
+
 from allauth.socialaccount import signals
 from allauth.socialaccount.adapter import get_adapter
 from allauth.socialaccount.models import SocialAccount
@@ -16,6 +16,7 @@ from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.exceptions import ValidationError as RestValidationError
 
 
+# view all social accounts for a specific user
 class SocialAccountViewSet(ListAPIView, GenericViewSet):
     queryset = SocialAccount.objects.all()
     serializer_class = SocialAccountSerializer
@@ -41,3 +42,5 @@ class SocialAccountViewSet(ListAPIView, GenericViewSet):
 class UserSocialAccountViewSet(NestedViewSetMixin, SocialAccountViewSet):
     parent_fk = "user__username"
     permission_classes = (IsAuthenticated, IsOwner)
+
+
