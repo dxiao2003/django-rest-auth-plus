@@ -1,15 +1,25 @@
 from __future__ import unicode_literals
 
+from collections import namedtuple
 from random import randint
 
-from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
+from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken, \
+    SocialLogin
 from django.conf.urls import patterns, url, include
 from django.contrib.auth.models import User
+
+from django.contrib.sessions.backends.signed_cookies import SessionStore
+from django.contrib.sites.shortcuts import get_current_site
+from mock import patch, MagicMock
+from rest_auth.registration.views import SocialLoginView
 from rest_auth.serializers import UserDetailsSerializer
+from rest_auth_plus.adapters import FacebookOAuth2Adapter
 from rest_auth_plus.views import SocialAccountViewSet, UserSocialAccountViewSet
+from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 from rest_framework.routers import SimpleRouter
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase, APIClient, APIRequestFactory, \
+    force_authenticate
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_extensions.routers import NestedRouterMixin
 from rest_framework_extensions.settings import extensions_api_settings
@@ -51,6 +61,72 @@ def social_account_test(account, a):
                                      a["social_token_set"][0]["token"] and
              account.socialtoken_set.first().account.uid == a["uid"]))
 
+
+class FacebookLoginView(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter
+
+
+class FacebookAdapterTestCase(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            "test user " + str(randint(1, 100000000))
+        )
+        self.app = SocialApp.objects.create(provider='facebook',
+                                            name='test app',
+                                            client_id='client_id',
+                                            secret='secret')
+
+    @patch("requests.get")
+    @patch("allauth.socialaccount.providers.facebook.views.fb_complete_login")
+    def test_create(self, fb_mock, get_mock):
+        user = User(username="username")
+        login = SocialLogin(user=user, account=SocialAccount())
+        login.state["next"] = "/"
+        fb_mock.return_value = login
+        ret_mock = MagicMock()
+        ret_mock.json.return_value = { "access_token": "OK" }
+        get_mock.return_value = ret_mock
+        factory = APIRequestFactory()
+        request = factory.post(
+            "/",
+            { "access_token": "1234" },
+            format="json"
+        )
+        request.session = SessionStore()
+        self.app.sites.add(get_current_site(request))
+        response = FacebookLoginView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        code = response.data["key"]
+        user = Token.objects.get(key=code).user
+        self.assertIsNotNone(user.socialaccount_set.first())
+        self.assertEqual(
+            user.socialaccount_set.first().socialtoken_set.first().token,
+            "OK"
+        )
+
+    @patch("requests.get")
+    @patch("allauth.socialaccount.providers.facebook.views.fb_complete_login")
+    def test_process_connect(self, fb_mock, get_mock):
+        fb_mock.return_value = SocialLogin(account=SocialAccount())
+        ret_mock = MagicMock()
+        ret_mock.json.return_value = { "access_token": "OK" }
+        get_mock.return_value = ret_mock
+        factory = APIRequestFactory()
+        request = factory.post(
+            "/?process=connect",
+            { "access_token": "1234" },
+            format="json"
+        )
+        self.app.sites.add(get_current_site(request))
+        force_authenticate(request, self.user)
+        response = FacebookLoginView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(self.user.socialaccount_set.first())
+        self.assertEqual(
+            self.user.socialaccount_set.first().socialtoken_set.first().token,
+            "OK"
+        )
 
 class SocialAccountTestCase(APITestCase):
     urls = 'tests.test_views'

@@ -42,8 +42,8 @@ def pytest_configure():
             'django.template.loaders.app_directories.Loader',
         ),
         MIDDLEWARE_CLASSES=(
-            'django.middleware.common.CommonMiddleware',
             'django.contrib.sessions.middleware.SessionMiddleware',
+            'django.middleware.common.CommonMiddleware',
             'django.middleware.csrf.CsrfViewMiddleware',
             'django.contrib.auth.middleware.AuthenticationMiddleware',
             'django.contrib.messages.middleware.MessageMiddleware',
@@ -53,18 +53,39 @@ def pytest_configure():
             'django.contrib.contenttypes',
             'django.contrib.sessions',
             'django.contrib.sites',
+            'rest_framework.authtoken',
+            'rest_auth',
             'allauth',
             'allauth.account',
             'allauth.socialaccount',
             'allauth.socialaccount.providers.facebook',
             'allauth.socialaccount.providers.google',
-            'django.contrib.messages',
             'django.contrib.staticfiles',
             'tests',
         ),
         PASSWORD_HASHERS=(
             'django.contrib.auth.hashers.MD5PasswordHasher',
         ),
+        REST_SESSION_LOGIN=False,
+        SOCIALACCOUNT_PROVIDERS= \
+            {'facebook':
+                 {'METHOD': 'oauth2',
+                  'SCOPE': ['email', 'public_profile', 'user_friends'],
+                  'FIELDS': [
+                      'id',
+                      'email',
+                      'name',
+                      'first_name',
+                      'last_name',
+                      'verified',
+                      'locale',
+                      'timezone',
+                      'link',
+                      'gender',
+                      'updated_time'],
+                  'EXCHANGE_TOKEN': True,
+                  'VERIFIED_EMAIL': False,
+                  'VERSION': 'v2.6'}}
     )
 
     try:

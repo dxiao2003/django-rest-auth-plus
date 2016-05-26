@@ -18,5 +18,5 @@ class SocialAccountSerializer(ModelSerializer):
 
     class Meta:
         model = SocialAccount
-        fields = ("user", "provider", "uid", "last_login", "date_joined",
+        fields = ("id", "user", "provider", "uid", "last_login", "date_joined",
                   "extra_data", "social_token_set")
