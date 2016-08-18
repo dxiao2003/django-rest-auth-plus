@@ -79,4 +79,4 @@ class FacebookOAuth2Adapter(BaseFacebookOAuth2Adapter):
         if process:
             login.state["process"] = process
 
-        return logi
+        return login
