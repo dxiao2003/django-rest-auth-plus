@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, absolute_import
 
+from django.utils.translation import ugettext as _
 from allauth.exceptions import ImmediateHttpResponse
 from allauth.socialaccount import signals
 from allauth.socialaccount import providers
@@ -63,7 +64,12 @@ class FacebookOAuth2Adapter(BaseFacebookOAuth2Adapter):
                         'client_id': app.client_id,
                         'client_secret': app.secret,
                         'fb_exchange_token': token.token}).json()
-            token.token = resp['access_token']
+
+            if "access_token" not in resp:
+                raise ValidationError(_("Invalid access token"))
+            else:
+                token.token = resp['access_token']
+
         login = super(FacebookOAuth2Adapter, self).complete_login(
             request, app, token
         )
@@ -73,4 +79,4 @@ class FacebookOAuth2Adapter(BaseFacebookOAuth2Adapter):
         if process:
             login.state["process"] = process
 
-        return login
+        return logi
